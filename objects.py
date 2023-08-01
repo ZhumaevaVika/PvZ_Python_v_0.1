@@ -42,6 +42,10 @@ def spawn_plant(x, y, type='peashooter'):
             plant = Repeater(x, y)
         elif type == 'cherrybomb':
             plant = CherryBomb(x, y)
+        elif type == 'torchwood':
+            plant = Torchwood(x, y)
+        elif type == 'firepeashooter':
+            plant = FirePeaShooter(x, y)
 
 
         if check_same_loc(plant):
@@ -240,17 +244,18 @@ class Plant(pg.sprite.Sprite):
     def update(self):
         self.damage_animation()
         self.shoot_delay += 1
-        self.shoot()
+        self.shoot('peashooter_bullet')
 
     def if_zombie(self):
         for zom in zombies:
-            if (zom.rect.y == self.rect.y - 54) and (zom.rect.x <= 1024):
+            delta_y = (self.scale[1] - 70)/2 - 54
+            if (zom.rect.y == self.rect.y + delta_y) and (zom.rect.x <= 1024):
                 return True
 
-    def shoot(self):
+    def shoot(self, type):
         if self.if_zombie():
             if self.shoot_delay >= self.reload:
-                bullet = PeaShooterBullet(self)
+                bullet = PeaShooterBullet(self, type)
                 bullet_sprites.add(bullet)
                 bullets.append(bullet)
 
@@ -314,6 +319,11 @@ class Plant(pg.sprite.Sprite):
         if (self.type == self.type[:-1] + '2') and (self.explode_time == self.explode_timer):
             self.die()
 
+    def fire_pea(self):
+        for bullet in bullets:
+            if (bullet.type == 'peashooter_bullet') and (self.pos[0] + 35 >= bullet.rect.x >= self.pos[0] - 35) and (bullet.rect.y == self.pos[1] - 31):
+                bullet.type = 'fire_pea'
+
     def damage_animation(self):
         if self.if_damaged == 1:
             self.if_damaged_counter += 1
@@ -362,10 +372,10 @@ class Repeater(Plant):
         self.HP = 300
         self.cost = 200
 
-    def shoot(self):
+    def shoot(self, type):
         if self.if_zombie():
             if self.shoot_delay >= self.reload:
-                bullet = PeaShooterBullet(self)
+                bullet = PeaShooterBullet(self, type)
                 bullet_sprites.add(bullet)
                 bullets.append(bullet)
 
@@ -373,7 +383,7 @@ class Repeater(Plant):
                 self.shoot_delay = 0
                 self.reload = randint(81, 90)
             elif self.pause == self.reload + 15:
-                bullet = PeaShooterBullet(self)
+                bullet = PeaShooterBullet(self, type)
                 bullet_sprites.add(bullet)
                 bullets.append(bullet)
 
@@ -383,7 +393,28 @@ class Repeater(Plant):
         self.damage_animation()
         self.shoot_delay += 1
         self.pause += 1
-        self.shoot()
+        self.shoot('peashooter_bullet')
+
+
+class FirePeaShooter(Plant):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.type = 'firepeashooter'
+        self.scale = (90, 90)
+        filename = type_handler(self.type)
+        self.image = pg.image.load(filename).convert_alpha()
+        self.image = pg.transform.scale(self.image, self.scale)
+        self.pos = (x, y)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.reload = randint(81, 90)
+        self.HP = 300
+        self.cost = 175
+
+    def update(self):
+        self.damage_animation()
+        self.shoot_delay += 1
+        self.shoot('fire_pea')
 
 
 class SunFlower(Plant):
@@ -462,21 +493,60 @@ class CherryBomb(Plant):
     def update(self):
         self.big_explode()
 
-
-class PeaShooterBullet(pg.sprite.Sprite):
-    def __init__(self, peashooter):
-        pg.sprite.Sprite.__init__(self)
-        self.type = 'peashooter_bullet'
+class Torchwood(Plant):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.type = 'torchwood'
         filename = type_handler(self.type)
         self.image = pg.image.load(filename).convert_alpha()
-        self.image = pg.transform.scale(self.image, (18, 18))
-        self.pos = (peashooter.pos[0] + 35, peashooter.pos[1] - 22)
+        self.image = pg.transform.scale(self.image, self.scale)
+        self.pos = (x, y)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.HP = 300
+        self.maxHP = self.HP
+        self.cost = 175
+
+    def update(self):
+        self.damage_animation()
+        self.fire_pea()
+
+
+class PeaShooterBullet(pg.sprite.Sprite):
+    def __init__(self, peashooter, type='peashooter_bullet'):
+        pg.sprite.Sprite.__init__(self)
+        self.type = type
+        if self.type == 'peashooter_bullet':
+            self.scale = (18, 18)
+            self.damage = 20
+            delta_y = -22
+        elif self.type == 'fire_pea':
+            self.scale = (44, 28)
+            self.damage = 40
+            delta_y = 2
+        filename = type_handler(self.type)
+        self.image = pg.image.load(filename).convert_alpha()
+        self.image = pg.transform.scale(self.image, self.scale)
+        self.pos = (peashooter.pos[0] + 35, peashooter.pos[1] + delta_y)
         self.rect = self.image.get_rect(center=self.pos)
 
         self.v = 7
-        self.damage = 20
+
+    def update_type(self):
+        if self.type == 'peashooter_bullet':
+            self.scale = (18, 18)
+            self.damage = 20
+        elif self.type == 'fire_pea':
+            self.scale = (44, 28)
+            self.damage = 40
+
+        filename = type_handler(self.type)
+        self.image = pg.image.load(filename).convert_alpha()
+        self.image = pg.transform.scale(self.image, self.scale)
+
 
     def update(self):
+        self.update_type()
         self.move()
         self.damage_zombie()
 
@@ -492,7 +562,7 @@ class PeaShooterBullet(pg.sprite.Sprite):
 
     def damage_zombie(self):
         for zom in zombies:
-            if (-10 <= zom.rect.x - self.rect.x + 25 <= 10) and (zom.rect.y - self.rect.y + 58 == 0):
+            if (-10 <= zom.rect.x - self.rect.x + 25 <= 10) and (-20 <= zom.rect.y - self.rect.y + 58 <= 20):
                 if self in bullets:
                     self.die()
                     player.zombie_damaged += min(zom.HP, self.damage)
@@ -602,14 +672,15 @@ def zombie_spawner(z, difficulty):
 
     if player.zombie_spawn:
         for type in zom_arr:
+            y = choice(positions_y) - 22
             if type == 'basiczombie':
-                zom = BasicZombie()
+                zom = BasicZombie(y)
             elif type == 'flagzombie':
-                zom = FlagZombie()
+                zom = FlagZombie(y)
             elif type == 'coneheadzombie':
-                zom = ConeHeadZombie()
+                zom = ConeHeadZombie(y)
             elif type == 'bucketheadzombie':
-                zom = BucketHeadZombie()
+                zom = BucketHeadZombie(y)
 
             zombies_sprites.add(zom)
             zombies.append(zom)
@@ -618,12 +689,18 @@ def zombie_spawner(z, difficulty):
             difficulty += 1
     return difficulty
 
+def zombie_spawner_dev():
+    for i in range(5):
+        zom = BasicZombie(103 + 100*i)
+        zombies_sprites.add(zom)
+        zombies.append(zom)
+
 
 class Zombie(pg.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, y=choice(positions_y)-22):
         pg.sprite.Sprite.__init__(self)
         delta_x = randint(0, 5)
-        self.pos = (1070 + delta_x*25, choice(positions_y)-22)
+        self.pos = (1070 + delta_x*25, y)
         # self.pos = (1070, 303)
 
         self.type = None
@@ -697,8 +774,8 @@ class Zombie(pg.sprite.Sprite):
 
 
 class BasicZombie(Zombie):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, y=choice(positions_y)-22):
+        super().__init__(y)
         self.type = 'basiczombie0'
         filename = type_handler(self.type)
         self.image = pg.image.load(filename).convert_alpha()
@@ -711,8 +788,8 @@ class BasicZombie(Zombie):
 
 
 class FlagZombie(Zombie):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, y=choice(positions_y)-22):
+        super().__init__(y)
         self.type = 'flagzombie1'
         filename = type_handler(self.type)
         self.image = pg.image.load(filename).convert_alpha()
@@ -725,8 +802,8 @@ class FlagZombie(Zombie):
 
 
 class ConeHeadZombie(Zombie):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, y=choice(positions_y)-22):
+        super().__init__(y)
         self.type = 'coneheadzombie0'
         filename = type_handler(self.type)
         self.image = pg.image.load(filename).convert_alpha()
@@ -741,8 +818,8 @@ class ConeHeadZombie(Zombie):
 
 
 class BucketHeadZombie(Zombie):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, y=choice(positions_y)-22):
+        super().__init__(y)
         self.type = 'bucketheadzombie0'
         filename = type_handler(self.type)
         self.image = pg.image.load(filename).convert_alpha()

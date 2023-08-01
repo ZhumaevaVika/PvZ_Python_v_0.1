@@ -1,5 +1,5 @@
 import pygame as pg
-from objects import Interface, interfaces, interface_sprites, Shovel, zombie_spawner, spawn_buttons, produce_sun_sky, plants_sprites, plants, bullet_sprites, bullets, \
+from objects import zombie_spawner_dev, Interface, interfaces, interface_sprites, Shovel, zombie_spawner, spawn_buttons, produce_sun_sky, plants_sprites, plants, bullet_sprites, bullets, \
     zombies_sprites, zombies, sun_sprites, suns, player
 from config import FPS, WIDTH, HEIGHT, z
 from random import randint
@@ -10,10 +10,12 @@ def main():
     clock = pg.time.Clock()
     background = pg.image.load("sprites/Frontyard.png")
 
-    buttons, buttons_sprites = spawn_buttons(['sunflower_seed', 'peashooter_seed', 'potatomine_seed', 'wallnut_seed', 'repeater_seed', 'cherrybomb_seed'])
+    buttons, buttons_sprites = spawn_buttons(['sunflower_seed', 'peashooter_seed', 'potatomine_seed', 'wallnut_seed', 'repeater_seed', 'cherrybomb_seed', 'torchwood_seed', 'firepeashooter_seed'])
     shovel = Shovel()
     buttons.append(shovel)
     buttons_sprites.add(shovel)
+
+    # zombie_spawner_dev()
 
     player_sun = Interface('playersun')
     interfaces.append(player_sun)
@@ -39,7 +41,6 @@ def main():
             pass
 
         sky_sun_delay, sky_sun_reload = produce_sun_sky(sky_sun_delay, sky_sun_reload)
-        #print(difficulty)
         difficulty = zombie_spawner(z, difficulty)
         for zom in zombies:
             zom.update()

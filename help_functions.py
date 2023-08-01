@@ -77,6 +77,14 @@ def type_handler(type):
         filename = 'sprites/CherryBombSeed.png'
         reload_time = 2100
         cost = 150
+    elif type == 'torchwood_seed':
+        filename = 'sprites/Torchwood_seed.png'
+        reload_time = 300
+        cost = 175
+    elif type == 'firepeashooter_seed':
+        filename = 'sprites/FirePeashooter_seed.png'
+        reload_time = 300
+        cost = 175
     elif type == 'shovel':
         filename = 'sprites/Shovel.png'
         reload_time = 10
@@ -107,9 +115,15 @@ def type_handler(type):
         filename = 'sprites/CherryBomb0.png'
     elif type == 'cherrybomb2':
         filename = 'sprites/CherryBomb1.png'
+    elif type == 'torchwood':
+        filename = 'sprites/Torchwood.png'
+    elif type == 'firepeashooter':
+        filename = 'sprites/FirePeashooter.png'
 
     elif type == 'peashooter_bullet':
         filename = 'sprites/PeashooterBullet.png'
+    elif type == 'fire_pea':
+        filename = 'sprites/FirePea.png'
 
     elif type == 'basiczombie0':
         filename = 'sprites/Zombie0.png'
