@@ -57,38 +57,70 @@ def type_handler(type):
         filename = 'sprites/SunFlowerSeed.png'
         reload_time = 300
         cost = 50
+        size = (81, 55)
     elif type == 'peashooter_seed':
         filename = 'sprites/PeaShooterSeed.png'
         reload_time = 300
         cost = 100
+        size = (81, 55)
     elif type == 'potatomine_seed':
         filename = 'sprites/PotatoMineSeed.png'
         reload_time = 1200
         cost = 25
+        size = (81, 55)
     elif type == 'wallnut_seed':
         filename = 'sprites/WallNutSeed.png'
         reload_time = 1200
         cost = 50
+        size = (81, 55)
     elif type == 'repeater_seed':
         filename = 'sprites/Repeater_seed.png'
         reload_time = 300
         cost = 200
+        size = (81, 55)
     elif type == 'cherrybomb_seed':
         filename = 'sprites/CherryBombSeed.png'
         reload_time = 2100
         cost = 150
+        size = (81, 55)
     elif type == 'torchwood_seed':
         filename = 'sprites/Torchwood_seed.png'
         reload_time = 300
         cost = 175
+        size = (81, 55)
     elif type == 'firepeashooter_seed':
         filename = 'sprites/FirePeashooter_seed.png'
         reload_time = 300
         cost = 175
-    elif type == 'shovel':
+        size = (81, 55)
+    elif type == 'button_shovel':
         filename = 'sprites/Shovel.png'
         reload_time = 10
         cost = 0
+        size = (70, 70)
+    elif type == 'button_pause':
+        filename = 'sprites/Pause.png'
+        reload_time = 10
+        cost = 0
+        size = (70, 70)
+    elif type == 'button_speedup':
+        filename = 'sprites/SpeedUp.png'
+        reload_time = 10
+        cost = 0
+        size = (70, 70)
+    elif type == 'button_resume':
+        filename = 'sprites/Resume.png'
+        reload_time = 10
+        cost = 0
+        size = (151, 47)
+    elif type == 'button_restart':
+        filename = 'sprites/Restart.png'
+        reload_time = 10
+        cost = 0
+        size = (151, 47)
+
+    elif type == 'pause_menu':
+        filename = 'sprites/PauseMenu.png'
 
     elif type == 'playersun':
         filename = 'sprites/PlayerSun.png'
@@ -146,7 +178,7 @@ def type_handler(type):
 
     elif type == 'flower' or type == 'sky':
         filename = 'sprites/Sun.png'
-    if (type[-4:] == 'seed') or (type == 'shovel'):
-        return filename, reload_time, cost
+    if (type[-4:] == 'seed') or (type[:6] == 'button'):
+        return filename, reload_time, cost, size
     else:
         return filename

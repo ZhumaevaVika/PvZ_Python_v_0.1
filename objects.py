@@ -124,16 +124,16 @@ class Interface(pg.sprite.Sprite):
             self.pos = (300, 300)
         self.rect = self.image.get_rect(center=self.pos)
 
-    def update(self):
+    def update(self, clicked):
         pass
 
 
 class Buttons(pg.sprite.Sprite):
     def __init__(self, type, number):
         pg.sprite.Sprite.__init__(self)
-        filename, self.reload_time, self.cost = type_handler(type)
+        filename, self.reload_time, self.cost, self.size = type_handler(type)
         self.image = pg.image.load(filename).convert_alpha()
-        self.image = pg.transform.scale(self.image, (81, 55))
+        self.image = pg.transform.scale(self.image, self.size)
         self.pos = (100, 80 + number*55 + 3)
         self.rect = self.image.get_rect(center=self.pos)
 
@@ -158,21 +158,21 @@ class Buttons(pg.sprite.Sprite):
 
     def button_animation(self):
         (x, y) = pg.mouse.get_pos()
-        filename, self.reload_time, self.cost = type_handler(self.type)
-        if (self.rect.x <= x <= self.rect.x + 81) and (self.rect.y <= y <= self.rect.y + 55) and self.state == 'normal':
+        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        if (self.rect.x <= x <= self.rect.x + self.size[0]) and (self.rect.y <= y <= self.rect.y + self.size[1]) and self.state == 'normal':
             self.image = pg.image.load(filename).convert_alpha()
-            self.image = pg.transform.scale(self.image, (81, 55))
+            self.image = pg.transform.scale(self.image, self.size)
             self.image.fill((50, 50, 50), special_flags=pg.BLEND_RGB_ADD)
             self.state = 'filled'
-        elif not((self.rect.x <= x <= self.rect.x + 81) and
-                 (self.rect.y <= y <= self.rect.y + 55)) and self.state == 'filled':
+        elif not((self.rect.x <= x <= self.rect.x + self.size[0]) and
+                 (self.rect.y <= y <= self.rect.y + self.size[1])) and self.state == 'filled':
             self.state = 'normal'
         elif self.state == 'pressed':
             reduce_brightness(self.image, 0.35)
             self.state = 'hold_plant'
         elif self.state == 'normal':
             self.image = pg.image.load(filename).convert_alpha()
-            self.image = pg.transform.scale(self.image, (81, 55))
+            self.image = pg.transform.scale(self.image, self.size)
         elif self.state == 'reload':
             self.timer += 1
             self.reload_animation()
@@ -196,15 +196,111 @@ class Buttons(pg.sprite.Sprite):
             else:
                 self.state = 'normal'
 
+    def die(self):
+        buttons.remove(self)
+        self.kill()
+        del self
+
+
+class PauseButton(Buttons):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'button_pause'
+        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(filename).convert_alpha()
+        self.pos = (975, 40)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.state = 'normal'
+        self.timer = -1
+
+    def click(self, clicked):
+        (x, y) = pg.mouse.get_pos()
+        if (self.state == 'filled') and clicked:
+            self.state = 'pressed'
+        elif (self.state == 'hold_plant') and clicked:
+            if ((658 <= x <= 802) or (453 <= x <= 598) or (248 <= x <= 392)) and (385 <= y <= 430):
+                self.state = 'normal'
+
+
+class SpeedUpButton(Buttons):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'button_speedup'
+        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(filename).convert_alpha()
+        self.pos = (895, 40)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.state = 'normal'
+        self.timer = -1
+
+    def click(self, clicked):
+        (x, y) = pg.mouse.get_pos()
+        if (self.state == 'filled') and clicked:
+            self.state = 'pressed'
+        elif (self.state == 'hold_plant') and clicked:
+            if (860 <= x <= 935) and (0 <= y <= 130):
+                self.state = 'normal'
+
+
+class PauseMenuSprite(pg.sprite.Sprite):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'pause_menu'
+        filename = type_handler(self.type)
+        self.image = pg.image.load(filename).convert_alpha()
+        self.image = pg.transform.scale(self.image, (638, 317))
+        self.pos = (525, 275)
+        self.rect = self.image.get_rect(center=self.pos)
+
+    def die(self):
+        buttons.remove(self)
+        self.kill()
+        del self
+
+class PauseMenuButtonResume(Buttons):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'button_resume'
+        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(filename).convert_alpha()
+        self.pos = (705, 400)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.state = 'normal'
+        self.timer = -1
+
+    def click(self, clicked):
+        if (self.state == 'filled') and clicked:
+            self.state = 'pressed'
+
+class PauseMenuButtonRestart(Buttons):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'button_restart'
+        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(filename).convert_alpha()
+        self.pos = (500, 400)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.state = 'normal'
+        self.timer = -1
+
+    def click(self, clicked):
+        if (self.state == 'filled') and clicked:
+            self.state = 'pressed'
+
+
 
 class Shovel(Buttons):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.type = 'shovel'
-        filename, self.reload_time, self.cost = type_handler(self.type)
+        self.type = 'button_shovel'
+        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
         self.image = pg.image.load(filename).convert_alpha()
         self.image = pg.transform.scale(self.image, (70, 70))
-        self.pos = (975, 575)
+        self.pos = (975, 565)
         self.rect = self.image.get_rect(center=self.pos)
 
         self.state = 'normal'
