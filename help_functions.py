@@ -52,7 +52,7 @@ def brighter_cell(image):
 
 
 def type_handler(type):
-    filename, reload_time = None, None
+    filename, reload_time, cost, size = None, None, None, None
     if type == 'sunflower_seed':
         filename = 'sprites/SunFlowerSeed.png'
         reload_time = 300
@@ -115,6 +115,31 @@ def type_handler(type):
         size = (151, 47)
     elif type == 'button_restart':
         filename = 'sprites/Restart.png'
+        reload_time = 10
+        cost = 0
+        size = (151, 47)
+    elif type == 'button_exit_level':
+        filename = 'sprites/ExitToMap.png'
+        reload_time = 10
+        cost = 0
+        size = (151, 47)
+    elif type == 'button_back':
+        filename = 'sprites/Back.png'
+        reload_time = 10
+        cost = 0
+        size = (151, 47)
+    elif type == 'button_play':
+        filename = 'sprites/Play.png'
+        reload_time = 10
+        cost = 0
+        size = (151, 47)
+    elif type == 'button_survival':
+        filename = 'sprites/Survival.png'
+        reload_time = 10
+        cost = 0
+        size = (151, 47)
+    elif type == 'button_exit':
+        filename = 'sprites/Exit.png'
         reload_time = 10
         cost = 0
         size = (151, 47)

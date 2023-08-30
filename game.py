@@ -1,60 +1,48 @@
 import pygame as pg
-from objects import zombie_spawner_dev, Interface, interfaces, interface_sprites, Shovel, zombie_spawner, spawn_buttons, produce_sun_sky, plants_sprites, plants, bullet_sprites, bullets, \
-    zombies_sprites, zombies, sun_sprites, suns, player, PauseButton, PauseMenuSprite, PauseMenuButtonResume, PauseMenuButtonRestart, SpeedUpButton
+from objects import zombie_spawner, produce_sun_sky, plants_sprites, plants, bullet_sprites, bullets, zombies_sprites, \
+    zombies, sun_sprites, suns, player
+from buttons import interfaces, interface_sprites, buttons, buttons_sprites, spawn_buttons, spawn_pause_menu, \
+    spawn_level_interface, spawn_main_menu_buttons, spawn_level_select_buttons
 from config import WIDTH, HEIGHT, z
 from random import randint
+
 pg.init()
-class Game():
+
+
+class Game:
     def __init__(self):
-        self.state = 'run_level'
+        self.state = 'main_menu'
         self.FPS = 60
+        self.background = None
+        self.clock = None
+        self.screen = None
+        self.exit_program = False
 
     def run_level(self):
-        screen = pg.display.set_mode((WIDTH, HEIGHT))
-        clock = pg.time.Clock()
-        background = pg.image.load("sprites/Frontyard.png")
+        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+        self.clock = pg.time.Clock()
+        self.background = pg.image.load("sprites/Frontyard.png")
         paused = False
 
-        buttons, buttons_sprites = spawn_buttons(
+        spawn_buttons(
             ['sunflower_seed', 'peashooter_seed', 'potatomine_seed', 'wallnut_seed', 'repeater_seed', 'cherrybomb_seed',
              'torchwood_seed', 'firepeashooter_seed'])
-        shovel = Shovel()
-        buttons.append(shovel)
-        buttons_sprites.add(shovel)
 
-        pause = PauseButton()
-        interfaces.append(pause)
-        interface_sprites.add(pause)
-
-        speed_up = SpeedUpButton()
-        interfaces.append(speed_up)
-        interface_sprites.add(speed_up)
-
-
-        # zombie_spawner_dev()
-
-        player_sun = Interface('playersun')
-        interfaces.append(player_sun)
-        interface_sprites.add(player_sun)
+        spawn_level_interface()
 
         sky_sun_reload = randint(480, 1000)
         sky_sun_delay = sky_sun_reload - 150
         difficulty = 0
-        while True:
+        run = True
+        while run:
             clicked = 0
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
+                    self.exit_program = True
                     return
-                elif event.type == pg.MOUSEMOTION:
-                    pass
-                elif event.type == pg.KEYDOWN:
-                    pass
                 elif event.type == pg.MOUSEBUTTONDOWN:
                     clicked = 1
-
-            if pg.mouse.get_pressed()[0]:
-                pass
 
             if not paused:
                 sky_sun_delay, sky_sun_reload = produce_sun_sky(sky_sun_delay, sky_sun_reload)
@@ -78,69 +66,133 @@ class Game():
                         self.FPS = 60
                 if butt.type == 'button_pause':
                     if (butt.state == 'hold_plant') and not paused:
-                        pause_menu = PauseMenuSprite()
-                        interfaces.append(pause_menu)
-                        interface_sprites.add(pause_menu)
-
-                        resume = PauseMenuButtonResume()
-                        interfaces.append(resume)
-                        interface_sprites.add(resume)
-
-                        restart = PauseMenuButtonRestart()
-                        interfaces.append(restart)
-                        interface_sprites.add(restart)
-
+                        resume, restart, exit_level = spawn_pause_menu()
                         paused = True
 
-                if butt.type == 'button_resume':
-                    resume = butt
-                if butt.type == 'button_restart':
-                    restart = butt
-
-                if (butt.type == 'pause_menu') or (butt.type == 'button_resume') or (butt.type == 'button_restart'):
+                if (butt.type == 'pause_menu') or (butt.type == 'button_resume') or (butt.type == 'button_restart') or (
+                        butt.type == 'button_exit_level'):
                     if resume.state == 'pressed':
-                        interfaces.remove(butt)
-                        butt.kill()
-                        del butt
+                        butt.die_interface()
                         paused = False
                     if restart.state == 'pressed':
-                        interfaces.remove(butt)
-                        butt.kill()
-                        del butt
                         paused = False
-                        # self.restart(buttons) # FIXME
-                        # self.run_level()
+                        run = False
+                    if exit_level.state == 'pressed':
+                        butt.die_interface()
+                        paused = False
+                        self.state = 'level_select_screen'
+                        run = False
 
-
-            screen.blit(background, (0, 0))
-            plants_sprites.draw(screen)
-            zombies_sprites.draw(screen)
-            bullet_sprites.draw(screen)
-            sun_sprites.draw(screen)
-            buttons_sprites.draw(screen)
-            interface_sprites.draw(screen)
-            player.update(screen)
+            self.screen.blit(self.background, (0, 0))
+            plants_sprites.draw(self.screen)
+            zombies_sprites.draw(self.screen)
+            bullet_sprites.draw(self.screen)
+            sun_sprites.draw(self.screen)
+            buttons_sprites.draw(self.screen)
+            interface_sprites.draw(self.screen)
+            player.update(self.screen)
             pg.display.update()
             pg.display.flip()
-            clock.tick(self.FPS)
+            self.clock.tick(self.FPS)
+        self.restart(buttons)
+        if self.state == 'run_level':
+            self.run_level()
 
     def restart(self, buttons):
-        for zom in zombies:
-            zom.die()
-        for plt in plants:
-            plt.die()
-        for bul in bullets:
-            bul.die()
-        for sun in suns:
-            sun.die()
-        for button in buttons:
-            button.die()
-        for butt in interfaces:
-            interfaces.remove(butt)
-            butt.kill()
-            del butt
+        while len(zombies) + len(plants) + len(bullets) + len(suns) + len(buttons) + len(interfaces) >= 1:
+            for zom in zombies:
+                zom.die()
+            for plt in plants:
+                plt.die()
+            for bul in bullets:
+                bul.die()
+            for sun in suns:
+                sun.die()
+            for button in buttons:
+                button.die()
+            for butt in interfaces:
+                interfaces.remove(butt)
+                butt.kill()
+                del butt
+        player.sun = 0
+
+    def level_select_screen(self):
+        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+        self.clock = pg.time.Clock()
+        self.background = pg.image.load("sprites/LevelSelectScreen.png")
+
+        spawn_buttons([])
+
+        back = spawn_level_select_buttons()
+
+        run = True
+        while run:
+            clicked = 0
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.exit_program = True
+                    return
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    clicked = 1
+
+            for button in buttons:
+                button.update(clicked)
+                if back.state == 'pressed':
+                    buttons.remove(button)
+                    button.kill()
+                    del button
+                    self.state = 'main_menu'
+                    run = False
+
+            self.screen.blit(self.background, (0, 0))
+            buttons_sprites.draw(self.screen)
+            pg.display.update()
+            pg.display.flip()
+            self.clock.tick(self.FPS)
+
     def main_menu(self):
-        pass
+        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+        self.clock = pg.time.Clock()
+        self.background = pg.image.load("sprites/MainMenu.png")
+
+        spawn_buttons([])
+
+        play, survival, exit = spawn_main_menu_buttons()
+
+        run = True
+        while run:
+            clicked = 0
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.exit_program = True
+                    return
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    clicked = 1
+
+            for button in buttons:
+                button.update(clicked)
+                if play.state == 'pressed':
+                    button.die()
+                    self.state = 'level_select_screen'
+                    run = False
+                if survival.state == 'pressed':
+                    button.die()
+                    self.state = 'run_level'
+                    run = False
+                if exit.state == 'pressed':
+                    button.die()
+                    self.exit_program = True
+                    return
+
+            self.screen.blit(self.background, (0, 0))
+            buttons_sprites.draw(self.screen)
+            pg.display.update()
+            pg.display.flip()
+            self.clock.tick(self.FPS)
+
+        self.restart(buttons)
 
 
 game = Game()

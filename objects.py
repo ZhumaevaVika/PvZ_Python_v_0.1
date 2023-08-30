@@ -1,7 +1,8 @@
 import pygame as pg
 from config import positions_y
 from random import randint, choice, choices
-from help_functions import type_handler, get_location_to_spawn, reduce_brightness
+from help_functions import type_handler, get_location_to_spawn
+from player import player
 
 sun_sprites = pg.sprite.Group()
 suns = []
@@ -11,10 +12,6 @@ bullet_sprites = pg.sprite.Group()
 bullets = []
 zombies_sprites = pg.sprite.Group()
 zombies = []
-buttons_sprites = pg.sprite.Group()
-buttons = []
-interface_sprites = pg.sprite.Group()
-interfaces = []
 
 
 def check_same_loc(plant):
@@ -47,7 +44,6 @@ def spawn_plant(x, y, type='peashooter'):
         elif type == 'firepeashooter':
             plant = FirePeaShooter(x, y)
 
-
         if check_same_loc(plant):
             if player.sun >= plant.cost:
                 player.sun -= plant.cost
@@ -79,39 +75,7 @@ def produce_sun_sky(shoot_delay, reload):
     return shoot_delay, reload
 
 
-def spawn_buttons(filenames):
-    for i in range(len(filenames)):
-        button = Buttons(filenames[i], i)
-        buttons_sprites.add(button)
-        buttons.append(button)
-    return buttons, buttons_sprites
-
-
-class Player:
-    def __init__(self, dev_mode):
-        self.plant_type = None
-        self.zombie_damaged = 0
-        self.timer = 0
-        self.zombie_spawn = False
-        if dev_mode:
-            self.sun = 9900
-        else:
-            self.sun = 0
-
-    def draw_sun(self, screen):
-        font = pg.font.SysFont(None, 48)
-        img = font.render(str(int(player.sun)), True, (255, 255, 255))
-        screen.blit(img, (90, 15))
-
-    def update(self, screen):
-        self.timer += 1
-        self.draw_sun(screen)
-
-
-player = Player(False)
-
-
-class Interface(pg.sprite.Sprite):
+"""class Interface(pg.sprite.Sprite):
     def __init__(self, type):
         pg.sprite.Sprite.__init__(self)
         self.type = type
@@ -125,196 +89,7 @@ class Interface(pg.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.pos)
 
     def update(self, clicked):
-        pass
-
-
-class Buttons(pg.sprite.Sprite):
-    def __init__(self, type, number):
-        pg.sprite.Sprite.__init__(self)
-        filename, self.reload_time, self.cost, self.size = type_handler(type)
-        self.image = pg.image.load(filename).convert_alpha()
-        self.image = pg.transform.scale(self.image, self.size)
-        self.pos = (100, 80 + number*55 + 3)
-        self.rect = self.image.get_rect(center=self.pos)
-
-        self.type = type
-        self.state = 'normal'
-        self.timer = -1
-
-    def update(self, clicked):
-        self.button_animation()
-        self.click(clicked)
-
-    def reload_animation(self):
-        if self.timer % (self.reload_time/10) == 0:
-            n = 10 - int(self.timer // (self.reload_time/10))
-            for x in range(self.image.get_width()):
-                for y in range(n*5, (n+1)*5):
-                    r, g, b, a = self.image.get_at((x, y))
-                    new_r = int(r * 1.5)
-                    new_g = int(g * 1.5)
-                    new_b = int(b * 1.5)
-                    self.image.set_at((x, y), (new_r, new_g, new_b, a))
-
-    def button_animation(self):
-        (x, y) = pg.mouse.get_pos()
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        if (self.rect.x <= x <= self.rect.x + self.size[0]) and (self.rect.y <= y <= self.rect.y + self.size[1]) and self.state == 'normal':
-            self.image = pg.image.load(filename).convert_alpha()
-            self.image = pg.transform.scale(self.image, self.size)
-            self.image.fill((50, 50, 50), special_flags=pg.BLEND_RGB_ADD)
-            self.state = 'filled'
-        elif not((self.rect.x <= x <= self.rect.x + self.size[0]) and
-                 (self.rect.y <= y <= self.rect.y + self.size[1])) and self.state == 'filled':
-            self.state = 'normal'
-        elif self.state == 'pressed':
-            reduce_brightness(self.image, 0.35)
-            self.state = 'hold_plant'
-        elif self.state == 'normal':
-            self.image = pg.image.load(filename).convert_alpha()
-            self.image = pg.transform.scale(self.image, self.size)
-        elif self.state == 'reload':
-            self.timer += 1
-            self.reload_animation()
-            if self.timer == self.reload_time:
-                self.state = 'normal'
-                self.timer = -1
-        if self.state == 'normal' and player.sun < self.cost:
-            reduce_brightness(self.image, 0.35)
-            self.state = 'not_enough_sun'
-        if self.state == 'not_enough_sun' and player.sun >= self.cost:
-            self.state = 'normal'
-
-    def click(self, clicked):
-        (x, y) = pg.mouse.get_pos()
-        if (self.state == 'filled') and clicked:
-            self.state = 'pressed'
-            player.plant_type = self.type[:-5]
-        elif (self.state == 'hold_plant') and clicked:
-            if spawn_plant(x, y, player.plant_type):
-                self.state = 'reload'
-            else:
-                self.state = 'normal'
-
-    def die(self):
-        buttons.remove(self)
-        self.kill()
-        del self
-
-
-class PauseButton(Buttons):
-    def __init__(self):
-        pg.sprite.Sprite.__init__(self)
-        self.type = 'button_pause'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
-        self.pos = (975, 40)
-        self.rect = self.image.get_rect(center=self.pos)
-
-        self.state = 'normal'
-        self.timer = -1
-
-    def click(self, clicked):
-        (x, y) = pg.mouse.get_pos()
-        if (self.state == 'filled') and clicked:
-            self.state = 'pressed'
-        elif (self.state == 'hold_plant') and clicked:
-            if ((658 <= x <= 802) or (453 <= x <= 598) or (248 <= x <= 392)) and (385 <= y <= 430):
-                self.state = 'normal'
-
-
-class SpeedUpButton(Buttons):
-    def __init__(self):
-        pg.sprite.Sprite.__init__(self)
-        self.type = 'button_speedup'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
-        self.pos = (895, 40)
-        self.rect = self.image.get_rect(center=self.pos)
-
-        self.state = 'normal'
-        self.timer = -1
-
-    def click(self, clicked):
-        (x, y) = pg.mouse.get_pos()
-        if (self.state == 'filled') and clicked:
-            self.state = 'pressed'
-        elif (self.state == 'hold_plant') and clicked:
-            if (860 <= x <= 935) and (0 <= y <= 130):
-                self.state = 'normal'
-
-
-class PauseMenuSprite(pg.sprite.Sprite):
-    def __init__(self):
-        pg.sprite.Sprite.__init__(self)
-        self.type = 'pause_menu'
-        filename = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
-        self.image = pg.transform.scale(self.image, (638, 317))
-        self.pos = (525, 275)
-        self.rect = self.image.get_rect(center=self.pos)
-
-    def die(self):
-        buttons.remove(self)
-        self.kill()
-        del self
-
-class PauseMenuButtonResume(Buttons):
-    def __init__(self):
-        pg.sprite.Sprite.__init__(self)
-        self.type = 'button_resume'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
-        self.pos = (705, 400)
-        self.rect = self.image.get_rect(center=self.pos)
-
-        self.state = 'normal'
-        self.timer = -1
-
-    def click(self, clicked):
-        if (self.state == 'filled') and clicked:
-            self.state = 'pressed'
-
-class PauseMenuButtonRestart(Buttons):
-    def __init__(self):
-        pg.sprite.Sprite.__init__(self)
-        self.type = 'button_restart'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
-        self.pos = (500, 400)
-        self.rect = self.image.get_rect(center=self.pos)
-
-        self.state = 'normal'
-        self.timer = -1
-
-    def click(self, clicked):
-        if (self.state == 'filled') and clicked:
-            self.state = 'pressed'
-
-
-
-class Shovel(Buttons):
-    def __init__(self):
-        pg.sprite.Sprite.__init__(self)
-        self.type = 'button_shovel'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
-        self.image = pg.transform.scale(self.image, (70, 70))
-        self.pos = (975, 565)
-        self.rect = self.image.get_rect(center=self.pos)
-
-        self.state = 'normal'
-        self.timer = -1
-
-    def click(self, clicked):
-        (x, y) = pg.mouse.get_pos()
-        if (self.state == 'filled') and clicked:
-            self.state = 'pressed'
-        elif (self.state == 'hold_plant') and clicked:
-            if dig_plant(x, y):
-                self.state = 'reload'
-            else:
-                self.state = 'normal'
+        pass"""
 
 
 class Plant(pg.sprite.Sprite):
@@ -417,7 +192,8 @@ class Plant(pg.sprite.Sprite):
 
     def fire_pea(self):
         for bullet in bullets:
-            if (bullet.type == 'peashooter_bullet') and (self.pos[0] + 35 >= bullet.rect.x >= self.pos[0] - 35) and (bullet.rect.y == self.pos[1] - 31):
+            if ((bullet.type == 'peashooter_bullet') and (self.pos[0] + 35 >= bullet.rect.x >= self.pos[0] - 35)
+                    and (bullet.rect.y == self.pos[1] - 31)):
                 bullet.type = 'fire_pea'
 
     def damage_animation(self):
@@ -589,6 +365,7 @@ class CherryBomb(Plant):
     def update(self):
         self.big_explode()
 
+
 class Torchwood(Plant):
     def __init__(self, x, y):
         super().__init__(x, y)
@@ -612,6 +389,7 @@ class PeaShooterBullet(pg.sprite.Sprite):
     def __init__(self, peashooter, type='peashooter_bullet'):
         pg.sprite.Sprite.__init__(self)
         self.type = type
+        delta_y = None
         if self.type == 'peashooter_bullet':
             self.scale = (18, 18)
             self.damage = 20
@@ -639,7 +417,6 @@ class PeaShooterBullet(pg.sprite.Sprite):
         filename = type_handler(self.type)
         self.image = pg.image.load(filename).convert_alpha()
         self.image = pg.transform.scale(self.image, self.scale)
-
 
     def update(self):
         self.update_type()
@@ -729,14 +506,6 @@ class SunF(Sun):
         self.rect = self.image.get_rect(center=self.pos)
 
 
-
-
-
-
-
-
-##########################################################################################################################
-
 def zombie_spawner(z, difficulty):
     zom = None
     if 0 <= difficulty <= 2:
@@ -785,6 +554,7 @@ def zombie_spawner(z, difficulty):
             difficulty += 1
     return difficulty
 
+
 def zombie_spawner_dev():
     for i in range(5):
         zom = BasicZombie(103 + 100*i)
@@ -812,7 +582,8 @@ class Zombie(pg.sprite.Sprite):
 
     def update_base(self):
         plt = None
-        self.die()
+        if self.HP <= 0:
+            self.die()
         for plt in plants:
             if (-10 <= plt.rect.x - self.rect.x + 25 <= 55) and (self.rect.y == plt.rect.y - 54):
                 self.state = 'damage_plant'
@@ -832,7 +603,7 @@ class Zombie(pg.sprite.Sprite):
                 self.timer = 0
 
     def update_type(self):
-        if (100 <= self.HP <= 190)and((self.type == 'bucketheadzombie2')or(self.type == 'coneheadzombie2')):
+        if (100 <= self.HP <= 190) and ((self.type == 'bucketheadzombie2') or (self.type == 'coneheadzombie2')):
             self.type = 'basiczombie0'
         elif 0 <= self.HP < 100:
             self.type = 'basiczombie1'
@@ -863,10 +634,9 @@ class Zombie(pg.sprite.Sprite):
                 self.if_damaged_counter = 0
 
     def die(self):
-        if self.HP <= 0:
-            zombies.remove(self)
-            self.kill()
-            del self
+        zombies.remove(self)
+        self.kill()
+        del self
 
 
 class BasicZombie(Zombie):
@@ -927,4 +697,3 @@ class BucketHeadZombie(Zombie):
         self.HP = 1290
         self.maxHP = self.HP
         self.armor = self.HP - 190
-
