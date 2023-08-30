@@ -99,7 +99,7 @@ class Game:
             self.run_level()
 
     def restart(self, buttons):
-        while len(zombies) + len(plants) + len(bullets) + len(suns) + len(buttons) + len(interfaces) >= 1:
+        while len(zombies) + len(plants) + len(bullets) + len(suns) + len(buttons) + len(interfaces) > 0:
             for zom in zombies:
                 zom.die()
             for plt in plants:
@@ -121,9 +121,8 @@ class Game:
         self.clock = pg.time.Clock()
         self.background = pg.image.load("sprites/LevelSelectScreen.png")
 
-        spawn_buttons([])
-
-        back = spawn_level_select_buttons()
+        filenames = ['button_level_zombie', 'button_level_cone', 'button_level_bucket', 'button_level_pole', 'button_level_flag']
+        back = spawn_level_select_buttons(filenames)
 
         run = True
         while run:
@@ -139,11 +138,28 @@ class Game:
             for button in buttons:
                 button.update(clicked)
                 if back.state == 'pressed':
-                    buttons.remove(button)
-                    button.kill()
-                    del button
                     self.state = 'main_menu'
                     run = False
+                elif buttons[0].state == 'pressed':
+                    self.state = 'run_level'
+                    run = False
+                elif buttons[1].state == 'pressed':
+                    self.state = 'run_level'
+                    run = False
+                elif buttons[2].state == 'pressed':
+                    self.state = 'run_level'
+                    run = False
+                elif buttons[3].state == 'pressed':
+                    self.state = 'run_level'
+                    run = False
+                elif buttons[4].state == 'pressed':
+                    self.state = 'run_level'
+                    run = False
+                if button.state == 'pressed':
+                    while len(buttons) > 0:
+                        for butt in buttons:
+                            butt.die()
+
 
             self.screen.blit(self.background, (0, 0))
             buttons_sprites.draw(self.screen)

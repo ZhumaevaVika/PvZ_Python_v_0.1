@@ -143,6 +143,31 @@ def type_handler(type):
         reload_time = 10
         cost = 0
         size = (151, 47)
+    elif type == 'button_level_zombie':
+        filename = 'sprites/LevelZombie.png'
+        reload_time = 10
+        cost = 0
+        size = (189, 223)
+    elif type == 'button_level_cone':
+        filename = 'sprites/LevelCone.png'
+        reload_time = 10
+        cost = 0
+        size = (189, 223)
+    elif type == 'button_level_bucket':
+        filename = 'sprites/LevelBucket.png'
+        reload_time = 10
+        cost = 0
+        size = (189, 223)
+    elif type == 'button_level_pole':
+        filename = 'sprites/LevelPole.png'
+        reload_time = 10
+        cost = 0
+        size = (189, 223)
+    elif type == 'button_level_flag':
+        filename = 'sprites/LevelFlag.png'
+        reload_time = 10
+        cost = 0
+        size = (189, 223)
 
     elif type == 'pause_menu':
         filename = 'sprites/PauseMenu.png'

@@ -55,7 +55,12 @@ def spawn_level_interface():
     interface_sprites.add(player_sun)
 
 
-def spawn_level_select_buttons():
+def spawn_level_select_buttons(filenames):
+    for i in range(len(filenames)):
+        button = LevelButton(filenames[i], i)
+        buttons_sprites.add(button)
+        buttons.append(button)
+
     back = BackButton()
     buttons.append(back)
     buttons_sprites.add(back)
@@ -127,6 +132,11 @@ class Buttons(pg.sprite.Sprite):
     def button_animation(self):
         (x, y) = pg.mouse.get_pos()
         filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        if self.state == 'normal' and player.sun < self.cost:
+            reduce_brightness(self.image, 0.35)
+            self.state = 'not_enough_sun'
+        if self.state == 'not_enough_sun' and player.sun >= self.cost:
+            self.state = 'normal'
         if ((self.rect.x <= x <= self.rect.x + self.size[0]) and (self.rect.y <= y <= self.rect.y + self.size[1])
                 and self.state == 'normal'):
             self.image = pg.image.load(filename).convert_alpha()
@@ -148,11 +158,6 @@ class Buttons(pg.sprite.Sprite):
             if self.timer == self.reload_time:
                 self.state = 'normal'
                 self.timer = -1
-        if self.state == 'normal' and player.sun < self.cost:
-            reduce_brightness(self.image, 0.35)
-            self.state = 'not_enough_sun'
-        if self.state == 'not_enough_sun' and player.sun >= self.cost:
-            self.state = 'normal'
 
     def click(self, clicked):
         (x, y) = pg.mouse.get_pos()
@@ -306,14 +311,13 @@ class PauseMenuButtonMainMenu(PauseMenuButtonResume):
         self.timer = -1
 
 
-"""
 class LevelButton(Buttons):
     def __init__(self, type, number):
         pg.sprite.Sprite.__init__(self)
         filename, self.reload_time, self.cost, self.size = type_handler(type)
         self.image = pg.image.load(filename).convert_alpha()
         self.image = pg.transform.scale(self.image, self.size)
-        self.pos = (100, 80 + number*55 + 3)
+        self.pos = (110 + (number % 5)*200, 120 + (number//5)*250)
         self.rect = self.image.get_rect(center=self.pos)
 
         self.type = type
@@ -323,7 +327,7 @@ class LevelButton(Buttons):
     def click(self, clicked):
         if (self.state == 'filled') and clicked:
             self.state = 'pressed'
-"""
+
 
 
 class BackButton(PauseMenuButtonResume):
