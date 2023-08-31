@@ -13,6 +13,9 @@ class Player:
         self.zombie_damaged = 0
         self.timer = 0
         self.zombie_spawn = False
+        self.plants = []
+        self.plants_prev = ['sunflower_seed', 'peashooter_seed', 'potatomine_seed', 'wallnut_seed', 'repeater_seed',
+              'cherrybomb_seed', 'torchwood_seed']
         if dev_mode:
             self.sun = 9900
         else:

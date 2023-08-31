@@ -2,7 +2,7 @@ import pygame as pg
 from objects import zombie_spawner, produce_sun_sky, plants_sprites, plants, bullet_sprites, bullets, zombies_sprites, \
     zombies, sun_sprites, suns, player
 from buttons import interfaces, interface_sprites, buttons, buttons_sprites, spawn_buttons, spawn_pause_menu, \
-    spawn_level_interface, spawn_main_menu_buttons, spawn_level_select_buttons
+    spawn_level_interface, spawn_main_menu_buttons, spawn_level_select_buttons, SelectPlantsScreen, LetsRockButton, Back2Button, spawn_select_plants_buttons, spawn_empty_slots, ResetButton
 from config import WIDTH, HEIGHT, z
 from random import randint
 
@@ -24,9 +24,7 @@ class Game:
         self.background = pg.image.load("sprites/Frontyard.png")
         paused = False
 
-        spawn_buttons(
-            ['sunflower_seed', 'peashooter_seed', 'potatomine_seed', 'wallnut_seed', 'repeater_seed', 'cherrybomb_seed',
-             'torchwood_seed', 'firepeashooter_seed'])
+        spawn_buttons(player.plants)
 
         spawn_level_interface()
 
@@ -81,6 +79,8 @@ class Game:
                         butt.die_interface()
                         paused = False
                         self.state = 'level_select_screen'
+                        player.plants_prev = player.plants.copy()
+                        player.plants.clear()
                         run = False
 
             self.screen.blit(self.background, (0, 0))
@@ -116,6 +116,84 @@ class Game:
                 del butt
         player.sun = 0
 
+    def reset_player_plants(self, buttons):
+        while len(buttons) > 19:
+            for button in buttons:
+                if button.type[-4:] == 'seed':
+                    buttons.remove(button)
+                    button.kill()
+                    del button
+
+    def select_plant_screen(self):
+        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+        self.clock = pg.time.Clock()
+        self.background = pg.image.load("sprites/FrontyardCopy.png")
+
+        obj = SelectPlantsScreen()
+        buttons.append(obj)
+        buttons_sprites.add(obj)
+
+        lets_rock = LetsRockButton()
+        buttons.append(lets_rock)
+        buttons_sprites.add(lets_rock)
+
+        back2 = Back2Button()
+        buttons.append(back2)
+        buttons_sprites.add(back2)
+
+        '''reset = ResetButton()
+        buttons.append(reset)
+        buttons_sprites.add(reset)'''
+
+        spawn_empty_slots(7)
+        spawn_select_plants_buttons()
+
+        run = True
+        while run:
+            clicked = 0
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.exit_program = True
+                    return
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    clicked = 1
+
+            for button in buttons:
+                button.update(clicked)
+                if back2.state == 'pressed':
+                    button.die()
+                    self.state = 'level_select_screen'
+                    run = False
+                if (lets_rock.state == 'pressed') and (len(player.plants) == 0):
+                    lets_rock.state = 'normal'
+                if lets_rock.state == 'pressed':
+                    button.die()
+                    self.state = 'run_level'
+                    run = False
+                '''if reset.state == 'pressed':
+                    player.plants = player.plants_prev'''
+
+                if (button.type[-4:] == 'slot') and (button.state == 'hold_plant') and (button.chosen == False) and (len(player.plants) < 7):
+                    player.plants.append(button.type[:-5])
+                    button.chosen = True
+                    self.reset_player_plants(buttons)
+                    spawn_buttons(player.plants)
+                if (button.type[-4:] == 'slot') and ((button.state == 'filled') or (button.state == 'normal')) and (button.chosen == True):
+                    player.plants.remove(button.type[:-5])
+                    button.chosen = False
+                    self.reset_player_plants(buttons)
+                    spawn_buttons(player.plants)
+                if (len(player.plants) == 7) and (button.state == 'hold_plant') and (button.type[:-5] not in player.plants):
+                    button.state = 'normal'
+
+            self.screen.blit(self.background, (0, 0))
+            buttons_sprites.draw(self.screen)
+            pg.display.update()
+            pg.display.flip()
+            self.clock.tick(self.FPS)
+        self.restart(buttons)
+
     def level_select_screen(self):
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
         self.clock = pg.time.Clock()
@@ -141,19 +219,19 @@ class Game:
                     self.state = 'main_menu'
                     run = False
                 elif buttons[0].state == 'pressed':
-                    self.state = 'run_level'
+                    self.state = 'select_plants_screen'
                     run = False
                 elif buttons[1].state == 'pressed':
-                    self.state = 'run_level'
+                    self.state = 'select_plants_screen'
                     run = False
                 elif buttons[2].state == 'pressed':
-                    self.state = 'run_level'
+                    self.state = 'select_plants_screen'
                     run = False
                 elif buttons[3].state == 'pressed':
-                    self.state = 'run_level'
+                    self.state = 'select_plants_screen'
                     run = False
                 elif buttons[4].state == 'pressed':
-                    self.state = 'run_level'
+                    self.state = 'select_plants_screen'
                     run = False
                 if button.state == 'pressed':
                     while len(buttons) > 0:
@@ -195,7 +273,7 @@ class Game:
                     run = False
                 if survival.state == 'pressed':
                     button.die()
-                    self.state = 'run_level'
+                    self.state = 'select_plants_screen'
                     run = False
                 if exit.state == 'pressed':
                     button.die()

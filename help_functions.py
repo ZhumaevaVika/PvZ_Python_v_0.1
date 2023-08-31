@@ -51,7 +51,7 @@ def brighter_cell(image):
 '''
 
 
-def type_handler(type):
+def type_handler(type, switch=False):
     filename, reload_time, cost, size = None, None, None, None
     if type == 'sunflower_seed':
         filename = 'sprites/SunFlowerSeed.png'
@@ -93,84 +93,69 @@ def type_handler(type):
         reload_time = 300
         cost = 175
         size = (81, 55)
+
     elif type == 'button_shovel':
         filename = 'sprites/Shovel.png'
-        reload_time = 10
-        cost = 0
         size = (70, 70)
     elif type == 'button_pause':
         filename = 'sprites/Pause.png'
-        reload_time = 10
-        cost = 0
         size = (70, 70)
     elif type == 'button_speedup':
         filename = 'sprites/SpeedUp.png'
-        reload_time = 10
-        cost = 0
         size = (70, 70)
     elif type == 'button_resume':
         filename = 'sprites/Resume.png'
-        reload_time = 10
-        cost = 0
         size = (151, 47)
     elif type == 'button_restart':
         filename = 'sprites/Restart.png'
-        reload_time = 10
-        cost = 0
         size = (151, 47)
     elif type == 'button_exit_level':
         filename = 'sprites/ExitToMap.png'
-        reload_time = 10
-        cost = 0
         size = (151, 47)
     elif type == 'button_back':
         filename = 'sprites/Back.png'
-        reload_time = 10
-        cost = 0
         size = (151, 47)
+    elif type == 'button_back2':
+        filename = 'sprites/Back2.png'
+        size = (151, 47)
+    elif type == 'button_lets_rock':
+        filename = 'sprites/LetsRock.png'
+        size = (151, 47)
+    elif type == 'button_empty':
+        filename = 'sprites/EmptySlot.png'
+        size = (81, 55)
+    elif type == 'button_reset':
+        filename = 'sprites/Reset.png'
+        size = (81, 55)
     elif type == 'button_play':
         filename = 'sprites/Play.png'
-        reload_time = 10
-        cost = 0
         size = (151, 47)
     elif type == 'button_survival':
         filename = 'sprites/Survival.png'
-        reload_time = 10
-        cost = 0
         size = (151, 47)
     elif type == 'button_exit':
         filename = 'sprites/Exit.png'
-        reload_time = 10
-        cost = 0
         size = (151, 47)
     elif type == 'button_level_zombie':
         filename = 'sprites/LevelZombie.png'
-        reload_time = 10
-        cost = 0
         size = (189, 223)
     elif type == 'button_level_cone':
         filename = 'sprites/LevelCone.png'
-        reload_time = 10
-        cost = 0
         size = (189, 223)
     elif type == 'button_level_bucket':
         filename = 'sprites/LevelBucket.png'
-        reload_time = 10
-        cost = 0
         size = (189, 223)
     elif type == 'button_level_pole':
         filename = 'sprites/LevelPole.png'
-        reload_time = 10
-        cost = 0
         size = (189, 223)
     elif type == 'button_level_flag':
         filename = 'sprites/LevelFlag.png'
-        reload_time = 10
-        cost = 0
         size = (189, 223)
 
     elif type == 'pause_menu':
         filename = 'sprites/PauseMenu.png'
+    elif type == 'select_plants_screen':
+        filename = 'sprites/SelectPlantScreen.png'
 
     elif type == 'playersun':
         filename = 'sprites/PlayerSun.png'
@@ -228,7 +213,9 @@ def type_handler(type):
 
     elif type == 'flower' or type == 'sky':
         filename = 'sprites/Sun.png'
-    if (type[-4:] == 'seed') or (type[:6] == 'button'):
+    if (type[-4:] == 'seed') and not switch:
         return filename, reload_time, cost, size
+    elif (type[:6] == 'button') or ((type[-4:] == 'seed') and switch):
+        return filename, 10, 0, size
     else:
         return filename

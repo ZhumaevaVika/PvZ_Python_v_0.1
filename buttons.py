@@ -2,6 +2,7 @@ import pygame as pg
 from help_functions import type_handler, reduce_brightness
 from objects import spawn_plant, dig_plant
 from player import player
+from config import all_plants
 
 buttons_sprites = pg.sprite.Group()
 buttons = []
@@ -14,6 +15,22 @@ def spawn_buttons(filenames):
         button = Buttons(filenames[i], i)
         buttons_sprites.add(button)
         buttons.append(button)
+    return buttons, buttons_sprites
+
+
+def spawn_select_plants_buttons():
+    for i in range(len(all_plants)):
+        button = SelectPlantsButtons(all_plants[i], i)
+        buttons_sprites.add(button)
+        buttons.append(button)
+    return buttons, buttons_sprites
+
+
+def spawn_empty_slots(amount):
+    for i in range(amount):
+        slot = EmptySlotSprite(i)
+        buttons_sprites.add(slot)
+        buttons.append(slot)
     return buttons, buttons_sprites
 
 
@@ -88,8 +105,8 @@ class Interface(pg.sprite.Sprite):
     def __init__(self, type):
         pg.sprite.Sprite.__init__(self)
         self.type = type
-        filename = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.image = pg.transform.scale(self.image, (142, 50))
         if self.type == 'playersun':
             self.pos = (100, 30)
@@ -104,8 +121,8 @@ class Interface(pg.sprite.Sprite):
 class Buttons(pg.sprite.Sprite):
     def __init__(self, type, number):
         pg.sprite.Sprite.__init__(self)
-        filename, self.reload_time, self.cost, self.size = type_handler(type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.image = pg.transform.scale(self.image, self.size)
         self.pos = (100, 80 + number*55 + 3)
         self.rect = self.image.get_rect(center=self.pos)
@@ -131,7 +148,6 @@ class Buttons(pg.sprite.Sprite):
 
     def button_animation(self):
         (x, y) = pg.mouse.get_pos()
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
         if self.state == 'normal' and player.sun < self.cost:
             reduce_brightness(self.image, 0.35)
             self.state = 'not_enough_sun'
@@ -139,7 +155,7 @@ class Buttons(pg.sprite.Sprite):
             self.state = 'normal'
         if ((self.rect.x <= x <= self.rect.x + self.size[0]) and (self.rect.y <= y <= self.rect.y + self.size[1])
                 and self.state == 'normal'):
-            self.image = pg.image.load(filename).convert_alpha()
+            self.image = pg.image.load(self.filename).convert_alpha()
             self.image = pg.transform.scale(self.image, self.size)
             self.image.fill((50, 50, 50), special_flags=pg.BLEND_RGB_ADD)
             self.state = 'filled'
@@ -150,7 +166,7 @@ class Buttons(pg.sprite.Sprite):
             reduce_brightness(self.image, 0.35)
             self.state = 'hold_plant'
         elif self.state == 'normal':
-            self.image = pg.image.load(filename).convert_alpha()
+            self.image = pg.image.load(self.filename).convert_alpha()
             self.image = pg.transform.scale(self.image, self.size)
         elif self.state == 'reload':
             self.timer += 1
@@ -185,8 +201,8 @@ class Shovel(Buttons):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_shovel'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.image = pg.transform.scale(self.image, (70, 70))
         self.pos = (975, 565)
         self.rect = self.image.get_rect(center=self.pos)
@@ -209,8 +225,8 @@ class PauseButton(Buttons):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_pause'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (975, 40)
         self.rect = self.image.get_rect(center=self.pos)
 
@@ -230,8 +246,8 @@ class SpeedUpButton(Buttons):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_speedup'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (895, 40)
         self.rect = self.image.get_rect(center=self.pos)
 
@@ -243,16 +259,66 @@ class SpeedUpButton(Buttons):
         if (self.state == 'filled') and clicked:
             self.state = 'pressed'
         elif (self.state == 'hold_plant') and clicked:
-            if (860 <= x <= 935) and (0 <= y <= 130):
+            if ((self.pos[0] - self.size[0]//2 <= x <= self.pos[0] + self.size[0]//2)
+                    and (self.pos[1] - self.size[1]//2 <= y <= self.pos[1] + self.size[1]//2)):
                 self.state = 'normal'
+
+
+class SelectPlantsButtons(SpeedUpButton):
+    def __init__(self, type, number):
+        pg.sprite.Sprite.__init__(self)
+        self.type = type
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type, True)
+        self.image = pg.image.load(self.filename).convert_alpha()
+        self.image = pg.transform.scale(self.image, self.size)
+        self.pos = (238 + (number % 4)*92, 130 + (number//4)*55)
+        self.rect = self.image.get_rect(center=self.pos)
+        self.type = self.type + '_slot'
+        self.chosen = False
+
+        self.state = 'normal'
+        self.timer = -1
+
+
+class ResetButton(SpeedUpButton):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'button_reset'
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type, True)
+        self.image = pg.image.load(self.filename).convert_alpha()
+        self.image = pg.transform.scale(self.image, self.size)
+        self.pos = (100, 468)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.state = 'normal'
+        self.timer = -1
+
+
+class EmptySlotSprite(pg.sprite.Sprite):
+    def __init__(self, number):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'button_empty'
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
+        self.image = pg.transform.scale(self.image, self.size)
+        self.pos = (100, 80 + number*55 + 3)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.state = 'normal'
+        self.timer = -1
+
+    def die(self):
+        buttons.remove(self)
+        self.kill()
+        del self
 
 
 class PauseMenuSprite(pg.sprite.Sprite):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'pause_menu'
-        filename = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.image = pg.transform.scale(self.image, (638, 317))
         self.pos = (525, 275)
         self.rect = self.image.get_rect(center=self.pos)
@@ -268,12 +334,24 @@ class PauseMenuSprite(pg.sprite.Sprite):
         del self
 
 
+class SelectPlantsScreen(PauseMenuSprite):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'select_plants_screen'
+        self.state = 'none'
+        self.filename = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
+        self.image = pg.transform.scale(self.image, (419, 419))
+        self.pos = (375, 255)
+        self.rect = self.image.get_rect(center=self.pos)
+
+
 class PauseMenuButtonResume(Buttons):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_resume'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (705, 400)
         self.rect = self.image.get_rect(center=self.pos)
 
@@ -289,8 +367,8 @@ class PauseMenuButtonRestart(PauseMenuButtonResume):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_restart'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (500, 400)
         self.rect = self.image.get_rect(center=self.pos)
 
@@ -302,8 +380,8 @@ class PauseMenuButtonMainMenu(PauseMenuButtonResume):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_exit_level'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (295, 400)
         self.rect = self.image.get_rect(center=self.pos)
 
@@ -314,8 +392,8 @@ class PauseMenuButtonMainMenu(PauseMenuButtonResume):
 class LevelButton(Buttons):
     def __init__(self, type, number):
         pg.sprite.Sprite.__init__(self)
-        filename, self.reload_time, self.cost, self.size = type_handler(type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.image = pg.transform.scale(self.image, self.size)
         self.pos = (110 + (number % 5)*200, 120 + (number//5)*250)
         self.rect = self.image.get_rect(center=self.pos)
@@ -329,14 +407,39 @@ class LevelButton(Buttons):
             self.state = 'pressed'
 
 
-
 class BackButton(PauseMenuButtonResume):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_back'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (100, 550)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.state = 'normal'
+        self.timer = -1
+
+
+class Back2Button(PauseMenuButtonResume):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'button_back2'
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
+        self.pos = (200, 550)
+        self.rect = self.image.get_rect(center=self.pos)
+
+        self.state = 'normal'
+        self.timer = -1
+
+
+class LetsRockButton(PauseMenuButtonResume):
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self)
+        self.type = 'button_lets_rock'
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
+        self.pos = (970, 550)
         self.rect = self.image.get_rect(center=self.pos)
 
         self.state = 'normal'
@@ -347,8 +450,8 @@ class PlayButton(PauseMenuButtonResume):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_play'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (500, 250)
         self.rect = self.image.get_rect(center=self.pos)
 
@@ -360,8 +463,8 @@ class SurvivalButton(PauseMenuButtonResume):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_survival'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (500, 300)
         self.rect = self.image.get_rect(center=self.pos)
 
@@ -373,8 +476,8 @@ class ExitButton(PauseMenuButtonResume):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.type = 'button_exit'
-        filename, self.reload_time, self.cost, self.size = type_handler(self.type)
-        self.image = pg.image.load(filename).convert_alpha()
+        self.filename, self.reload_time, self.cost, self.size = type_handler(self.type)
+        self.image = pg.image.load(self.filename).convert_alpha()
         self.pos = (500, 350)
         self.rect = self.image.get_rect(center=self.pos)
 
